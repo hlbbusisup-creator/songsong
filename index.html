@@ -322,24 +322,21 @@ const DEFAULT_CFG = {
 };
 
 /* ---------- 저장소 ---------- */
-const mem = new Map();
-const HAS_STORE = typeof window!=='undefined' && window.storage && typeof window.storage.get==='function';
+const API = 'https://script.google.com/macros/s/AKfycbzQT2Dy8C8uCCwGt1zE6ieE-MN_myW7U2Kuh54RJa9Tis9HPWrB36ePsmb0raPFeLnivQ/exec';
+const HAS_STORE = true;
+const post = body => fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).then(r=>r.json());
 const S = {
   async get(k){
-    if(!HAS_STORE) return mem.has(k)?mem.get(k):null;
-    try{ const r = await window.storage.get(k,true); return r?JSON.parse(r.value):null; }catch(e){ return null; }
+    try{ const r = await fetch(API+'?action=get&key='+encodeURIComponent(k)+'&t='+Date.now()).then(r=>r.json()); return r?JSON.parse(r.value):null; }catch(e){ return null; }
   },
   async set(k,v){
-    if(!HAS_STORE){ mem.set(k,v); return true; }
-    try{ await window.storage.set(k,JSON.stringify(v),true); return true; }catch(e){ return false; }
+    try{ const r = await post({action:'set',key:k,value:JSON.stringify(v)}); return !!(r&&r.ok); }catch(e){ return false; }
   },
   async del(k){
-    if(!HAS_STORE){ mem.delete(k); return; }
-    try{ await window.storage.delete(k,true); }catch(e){}
+    try{ await post({action:'delete',key:k}); }catch(e){}
   },
   async keys(prefix){
-    if(!HAS_STORE) return [...mem.keys()].filter(k=>k.startsWith(prefix));
-    try{ const r = await window.storage.list(prefix,true); return r? r.keys : []; }catch(e){ return []; }
+    try{ const r = await fetch(API+'?action=list&prefix='+encodeURIComponent(prefix)+'&t='+Date.now()).then(r=>r.json()); return r? r.keys : []; }catch(e){ return []; }
   }
 };
 const K = { cfg:'evt:cfg', entries:'evt:entries', vote:id=>'vote:'+id };
@@ -776,7 +773,7 @@ function renderAdminGate(){
 async function loadVotes(){
   const keys = await S.keys('vote:');
   const out = [];
-  for(const k of keys){ const v = await S.get(k); if(v) out.push(v); }
+  for(let i=0;i<keys.length;i+=20){ (await Promise.all(keys.slice(i,i+20).map(k=>S.get(k)))).forEach(v=>{ if(v) out.push(v); }); }
   return out.sort((a,b)=> a.at<b.at?1:-1);
 }
 
