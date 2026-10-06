@@ -214,7 +214,6 @@
   }
   .toast.on{opacity:1}
 
-  .demo-flag{background:#FBF0DC;border-bottom:1px solid #E8D3A8;color:#7A5A16;font-size:12.5px;padding:8px 20px;text-align:center}
 
   /* ---------- 관리자 ---------- */
   .adm{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
@@ -286,7 +285,6 @@
   .foot button{background:none;border:none;color:var(--ink-3);font-size:12px;text-decoration:underline;text-underline-offset:3px}
 </style>
 
-<div id="demoFlag" class="demo-flag hidden">데모 모드입니다. 새로고침하면 입력한 내용이 사라집니다.</div>
 <div id="app"></div>
 <div id="toast" class="toast"></div>
 <div id="veil"></div>
@@ -325,6 +323,18 @@ const DEFAULT_CFG = {
 const API = 'https://script.google.com/macros/s/AKfycbzQT2Dy8C8uCCwGt1zE6ieE-MN_myW7U2Kuh54RJa9Tis9HPWrB36ePsmb0raPFeLnivQ/exec';
 const HAS_STORE = true;
 const post = body => fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).then(r=>r.json());
+async function getStrict(k){
+  let last;
+  for(let i=0;i<3;i++){
+    try{
+      const res = await fetch(API+'?action=get&key='+encodeURIComponent(k)+'&t='+Date.now());
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const r = await res.json();
+      return r?JSON.parse(r.value):null;
+    }catch(e){ last=e; await new Promise(z=>setTimeout(z,800*(i+1))); }
+  }
+  throw last;
+}
 const S = {
   async get(k){
     try{ const r = await fetch(API+'?action=get&key='+encodeURIComponent(k)+'&t='+Date.now()).then(r=>r.json()); return r?JSON.parse(r.value):null; }catch(e){ return null; }
@@ -336,7 +346,12 @@ const S = {
     try{ await post({action:'delete',key:k}); }catch(e){}
   },
   async keys(prefix){
-    try{ const r = await fetch(API+'?action=list&prefix='+encodeURIComponent(prefix)+'&t='+Date.now()).then(r=>r.json()); return r? r.keys : []; }catch(e){ return []; }
+    let last;
+    for(let i=0;i<3;i++){
+      try{ const r = await fetch(API+'?action=list&prefix='+encodeURIComponent(prefix)+'&t='+Date.now()).then(r=>r.json()); return r? r.keys : []; }
+      catch(e){ last=e; await new Promise(z=>setTimeout(z,800*(i+1))); }
+    }
+    throw last;
   }
 };
 const K = { cfg:'evt:cfg', entries:'evt:entries', vote:id=>'vote:'+id };
@@ -457,22 +472,33 @@ const ENTRIES = [{"no":1,"ref":36,"cat":"재치상","sosok":"","dept":"","name":
 
 /* ---------- 초기화 ---------- */
 async function boot(){
-  if(!HAS_STORE) $('#demoFlag').classList.remove('hidden');
-  let saved = await S.get(K.cfg) || {};
+  const show = ()=>{
+    if(location.hash==='#admin') return renderAdminGate();
+    const typed = $('#gid') ? $('#gid').value : '';
+    renderGate();
+    if(typed) $('#gid').value = typed;
+  };
+  cfg = {...DEFAULT_CFG};
+  entries = ENTRIES;
+  show();                                   // 저장소 응답을 기다리지 않고 화면부터 띄운다
+  let saved, stored, ver;
+  try{
+    [saved, stored, ver] = await Promise.all([getStrict(K.cfg), getStrict(K.entries), getStrict('evt:entriesV')]);
+  }catch(e){ return; }                      // 조회 실패 시 아무것도 덮어쓰지 않는다
+  saved = saved || {};
   if((saved.v||1) < DEFAULT_CFG.v){
     saved = {...saved, formalMax:DEFAULT_CFG.formalMax, witMax:DEFAULT_CFG.witMax, v:DEFAULT_CFG.v};
     await S.set(K.cfg, saved);
   }
   cfg = {...DEFAULT_CFG, ...saved};
-  let stored = await S.get(K.entries);
-  if(stored === null || await S.get('evt:entriesV') !== ENTRIES_V){
-    for(const k of await S.keys('vote:')) await S.del(k);   // 옛 작품번호로 쌓인 표는 의미가 없다
+  if(stored === null || ver !== ENTRIES_V){
+    if(stored !== null) for(const k of await S.keys('vote:')) await S.del(k);   // 옛 작품번호로 쌓인 표는 의미가 없다
     stored = ENTRIES;
     await S.set(K.entries, stored);
     await S.set('evt:entriesV', ENTRIES_V);
   }
   entries = stored;
-  if(location.hash==='#admin') renderAdminGate(); else renderGate();
+  if($('#gate') || location.hash==='#admin' && !$('#gid')) { if($('#gate')) show(); }
 }
 
 /* ============================================================
@@ -524,12 +550,11 @@ async function enter(){
   if(!id) return err.textContent='그룹웨어 ID를 입력해 주세요.';
   if(!/^[a-z0-9._-]{3,}$/.test(id)) return err.textContent='영문·숫자로 된 그룹웨어 ID를 입력해 주세요.';
 
-  entries = await S.get(K.entries) || [];
   if(!entries.length) return err.textContent='아직 출품작이 등록되지 않았습니다. 잠시 후 다시 시도해 주세요.';
-
-  const prev = await S.get(K.vote(id));
-  if(prev) return renderAlready(prev);
   if(isClosed()) return renderClosed();
+
+  /* 화면은 바로 넘기고, 이미 투표했는지는 뒤에서 확인한다 (제출 때 한 번 더 확인) */
+  getStrict(K.vote(id)).then(prev=>{ if(prev && voter===id && $('#submit')){ $('#veil').innerHTML=''; renderAlready(prev); } }).catch(()=>{});
 
   voter = id;
   pick = { formal:new Set(), wit:new Set() };
@@ -715,7 +740,10 @@ async function submitVote(){
   $('#mYes').disabled = true;
   $('#mYes').textContent = '제출 중…';
 
-  if(await S.get(K.vote(voter))){ $('#veil').innerHTML=''; return renderAlready(await S.get(K.vote(voter))); }
+  let dup;
+  try{ dup = await getStrict(K.vote(voter)); }
+  catch(e){ $('#veil').innerHTML=''; return toast('접속이 원활하지 않습니다. 잠시 후 다시 제출해 주세요.'); }
+  if(dup){ $('#veil').innerHTML=''; return renderAlready(dup); }
   if(isClosed()){ $('#veil').innerHTML=''; return renderClosed(); }
 
   const rec = { id:voter, formal:[...pick.formal], wit:[...pick.wit], at:new Date().toISOString() };
@@ -773,13 +801,16 @@ function renderAdminGate(){
 async function loadVotes(){
   const keys = await S.keys('vote:');
   const out = [];
-  for(let i=0;i<keys.length;i+=20){ (await Promise.all(keys.slice(i,i+20).map(k=>S.get(k)))).forEach(v=>{ if(v) out.push(v); }); }
+  for(let i=0;i<keys.length;i+=8){ (await Promise.all(keys.slice(i,i+8).map(k=>getStrict(k)))).forEach(v=>{ if(v) out.push(v); }); }
   return out.sort((a,b)=> a.at<b.at?1:-1);
 }
 
 async function renderAdmin(){
-  entries = await S.get(K.entries) || [];
-  const votes = await loadVotes();
+  let votes = [], loadFail = false;
+  try{
+    entries = await getStrict(K.entries) || [];
+    votes = await loadVotes();
+  }catch(e){ loadFail = true; }
   const tabs = [['entries','출품작'],['status','투표 현황'],['result','결과'],['cfg','설정']];
 
   $('#app').innerHTML = `
@@ -787,6 +818,7 @@ async function renderAdmin(){
     <div class="adm-head">${logo()}<span class="sep"></span><h2>관리자</h2></div>
     <p class="adm-sub">${esc(cfg.title)} · 출품 ${entries.length}편 · 투표 ${votes.length}명</p>
     ${cfg.pin==='1234' ? `<div class="warnbox" style="margin:0 0 18px">기본 비밀번호(1234)를 그대로 쓰고 있습니다. 설정 탭에서 바꿔 주세요. 직원들에게도 보이는 관리자 링크가 첫 페이지에 있습니다.</div>` : ''}
+    ${loadFail ? `<div class="warnbox" style="margin:0 0 18px">투표 기록을 다 불러오지 못했습니다. 아래 숫자는 정확하지 않으니 잠시 후 탭을 다시 눌러 주세요.</div>` : ''}
     <div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${admTab===k?'on':''}" data-t="${k}">${l}</button>`).join('')}</div>
     <div id="admBody"></div>
     <div class="foot"><button onclick="location.hash='';location.reload()">투표 화면으로</button></div>
@@ -1272,8 +1304,8 @@ function panelResult(votes){
   const fRank = rankBy('f'), wRank = rankBy('w');
   const fTop = fRank[0]?.n || 1, wTop = wRank[0]?.n || 1;
 
-  const table = (list,top,cls,cut) => list.length ? `
-    <table><thead><tr><th class="rank">순위</th><th>작품</th><th class="num">득표</th></tr></thead><tbody>
+  const table = (list,top,cls,cut,prize) => list.length ? `
+    <table><thead><tr><th class="rank">순위</th><th>작품</th><th>상품</th><th class="num">득표</th></tr></thead><tbody>
       ${list.map((e,i)=>`<tr>
         <td class="rank ${e.rank<=cut?'top':''}">${e.rank}${e.tie?'<span class="tie">공동</span>':''}</td>
         <td>
@@ -1281,20 +1313,24 @@ function panelResult(votes){
           <div class="poem-mini">${e.lines.map(l=>esc(l)).join('<br>')}</div>
           <div class="bar ${cls}"><i style="width:${top?Math.round(e.n/top*100):0}%"></i></div>
         </td>
+        <td style="font-size:12.5px;white-space:nowrap">${e.n>0?prize(e.rank):''}</td>
         <td class="num">${e.n}</td>
       </tr>`).join('')}
     </tbody></table>` : `<div class="empty">집계할 투표가 없습니다.</div>`;
 
+  const fPrize = r => r===1 ? '<b>1등</b><br>다이슨 에어랩 스타일러' : r<=3 ? '<b>2등</b><br>갤럭시 버즈4 프로' : r<=6 ? '<b>3등</b><br>버츄오 팝 시크 블랙' : '';
+  const wPrize = r => r<=10 ? '<b>재치상</b><br>모바일 기프티콘' : '';
+
   $('#admBody').innerHTML = `
   <div class="panel">
-    <h3>정식 투표 부문</h3>
-    <p class="lead">8위까지 표시하며, 동점이면 같은 순위로 함께 보여줍니다. 대상 1편, 최우수 2편, 우수 5편을 여기서 선정합니다.</p>
-    ${table(fRank.filter(e=>e.rank<=8), fTop, '', 8)}
+    <h3>[정식 투표] 결과</h3>
+    <p class="lead">6위까지 표시하며, 동점이면 같은 순위로 함께 보여줍니다. 1등 1명(다이슨 에어랩 스타일러), 2등 2명(갤럭시 버즈4 프로), 3등 3명(버츄오 팝 시크 블랙)을 여기서 선정합니다.</p>
+    ${table(fRank.filter(e=>e.rank<=6), fTop, '', 6, fPrize)}
   </div>
   <div class="panel">
-    <h3>재치상 부문</h3>
-    <p class="lead">6위까지 표시하며, 동점이면 같은 순위로 함께 보여줍니다. 정식 부문 수상작은 중복 수상에서 제외하는 것을 권합니다.</p>
-    ${table(wRank.filter(e=>e.rank<=6), wTop, 'w', 3)}
+    <h3>[재치상 투표] 결과</h3>
+    <p class="lead">10위까지 표시하며, 동점이면 같은 순위로 함께 보여줍니다. 재치상 10명(모바일 기프티콘)을 여기서 선정합니다. 정식 투표 수상작은 중복 수상에서 제외하는 것을 권합니다.</p>
+    ${table(wRank.filter(e=>e.rank<=10), wTop, 'w', 10, wPrize)}
   </div>
   <div class="panel">
     <h3>참여상 추첨</h3>
