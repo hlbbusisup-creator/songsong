@@ -1,0 +1,1366 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>「신약승인」 4행시 투표</title>
+<style>
+  /* HLB GROUP CI 기반
+     --brand    #EF3E36  CI 원색. 로고와 큰 글자(대비 3.88:1, 큰 글자 기준 충족)
+     --brand-ui #DC332C  버튼·작은 글자. 흰 바탕 대비 4.61:1 (웹 접근성 AA 충족)
+     버튼 모서리 사선 컷은 로고 'B'의 모서리 처리에서 가져옴 */
+  :root{
+    --brand:#EF3E36;
+    --brand-ui:#DC332C;
+    --brand-deep:#B9271F;
+    --brand-tint:#FDEEED;
+    --wit:#283052;
+    --wit-deep:#1A2140;
+    --ink:#1C2030;
+    --ink-2:#565B6C;
+    --ink-3:#9397A4;
+    --paper:#F4F4F6;
+    --card:#FFFFFF;
+    --line:#DCDEE3;
+    --line-2:#EBECEF;
+    --serif:'Nanum Myeongjo','Apple Myungjo',Batang,'바탕',Georgia,serif;
+    --sans:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕','Noto Sans KR','Noto Sans CJK KR',sans-serif;
+    --cut:polygon(0 0,calc(100% - 11px) 0,100% 11px,100% 100%,11px 100%,0 calc(100% - 11px));
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
+    word-break:keep-all;overflow-wrap:break-word;
+  }
+  button{font-family:inherit;font-size:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:inherit;color:var(--ink)}
+  :focus-visible{outline:2px solid var(--brand-ui);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .hidden{display:none!important}
+  .logo{display:block;height:24px;width:auto}
+
+  /* ---------- 진입 화면 ---------- */
+  #gate{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+  .gate-box{width:100%;max-width:440px}
+  .gate-box > .logo{margin-bottom:46px}
+  .mast{display:flex;gap:20px;margin-bottom:38px}
+  .mast-syl{
+    font-family:var(--sans);font-weight:800;font-size:46px;line-height:1.1;
+    color:var(--brand);border-right:2px solid var(--brand);padding-right:20px;
+  }
+  .mast-syl span{display:block;opacity:0;animation:rise .55s cubic-bezier(.2,.7,.2,1) forwards}
+  .mast-syl span:nth-child(1){animation-delay:.05s}
+  .mast-syl span:nth-child(2){animation-delay:.15s}
+  .mast-syl span:nth-child(3){animation-delay:.25s}
+  .mast-syl span:nth-child(4){animation-delay:.35s}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .mast-txt{align-self:flex-end;padding-bottom:6px;opacity:0;animation:rise .55s ease .5s forwards}
+  .mast-txt h1{font-size:21px;font-weight:700;margin:0 0 8px;letter-spacing:-.02em;line-height:1.4}
+  .mast-txt p{margin:0;color:var(--brand-ui);font-size:13.5px;font-weight:600}
+
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;color:var(--ink)}
+  .field input[type=text]{
+    width:100%;padding:13px 14px;background:var(--card);
+    border:1px solid var(--line);border-radius:2px;transition:border-color .15s;
+  }
+  .field input[type=text]:focus{border-color:var(--ink);outline:none}
+  .field input[type=text]::placeholder{color:var(--ink-3)}
+  .hint{font-size:12.5px;color:var(--ink-3);margin-top:7px}
+
+  .consent{
+    background:var(--card);border:1px solid var(--line-2);border-radius:2px;
+    padding:14px 16px;margin-bottom:20px;
+  }
+  .consent-body{font-size:12.5px;color:var(--ink-2);line-height:1.75;margin-bottom:12px}
+  .consent-body:last-child{margin-bottom:0}
+  .consent-body b{font-weight:700;color:var(--ink);margin-right:4px}
+  .check{display:flex;gap:9px;align-items:flex-start;cursor:pointer;font-size:13.5px}
+  .check input{margin:3px 0 0;width:16px;height:16px;accent-color:var(--brand-ui);flex:none}
+
+  .btn-main{
+    width:100%;padding:15px;background:var(--brand-ui);color:#fff;
+    border:none;border-radius:0;font-weight:700;letter-spacing:-.01em;
+    clip-path:var(--cut);transition:background .15s;
+  }
+  .btn-main:hover{background:var(--brand-deep)}
+  .btn-main:focus-visible{outline:2px solid #fff;outline-offset:-6px}
+  .btn-main:disabled{background:var(--line);color:var(--ink-3);cursor:not-allowed}
+  .err{color:var(--brand-ui);font-size:13px;font-weight:600;margin-top:11px;min-height:19px}
+
+  /* ---------- 투표 화면 ---------- */
+  .topbar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
+  .topbar-in{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;padding:12px 20px;max-width:1080px;margin:0 auto;flex-wrap:wrap}
+  .topbar-l{display:flex;align-items:center;gap:13px;font-size:14px;font-weight:700;letter-spacing:-.01em;min-width:0}
+  .topbar-l .logo{height:17px;flex:none}
+  .topbar-l .sep{width:1px;height:15px;background:var(--line);flex:none}
+  .topbar-l em{font-style:normal;color:var(--ink-3);font-weight:500;font-size:12.5px}
+  @media(max-width:560px){.topbar-l em,.topbar-l .ttl,.topbar-l .sep{display:none}}
+  .tally{display:flex;gap:7px;background:none;border:none;padding:0;cursor:pointer}
+  .tally-item{
+    display:flex;align-items:baseline;gap:6px;padding:5px 12px;border-radius:999px;
+    font-size:12.5px;font-weight:600;border:1.5px solid;background:var(--card);
+  }
+  .tally-item.f{border-color:var(--brand-ui);color:var(--brand-ui)}
+  .tally-item.w{border-color:var(--wit);color:var(--wit)}
+  .tally-item b{font-variant-numeric:tabular-nums;font-weight:800;font-size:13.5px}
+  .tally-item.f.full{background:var(--brand-ui);color:#fff}
+  .tally-item.w.full{background:var(--wit);color:#fff}
+
+  .guide{padding:30px 0 22px;margin-bottom:6px}
+  .guide h2{font-size:19px;margin:0 0 14px;font-weight:800;letter-spacing:-.02em}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:12px}
+  .lg{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-2)}
+  .lg i{width:10px;height:10px;flex:none;clip-path:polygon(0 0,70% 0,100% 30%,100% 100%,30% 100%,0 70%)}
+  .lg.f i{background:var(--brand-ui)}
+  .lg.w i{background:var(--wit)}
+  .lg b{color:var(--ink);font-weight:700}
+  .guide p{margin:0;color:var(--ink-3);font-size:13px}
+
+  .grid{display:grid;gap:12px;grid-template-columns:1fr;padding:12px 0 120px}
+  @media(min-width:1000px){.grid{grid-template-columns:1fr 1fr}}
+
+  .poem{
+    background:var(--card);border:1px solid var(--line-2);border-radius:3px;
+    display:flex;overflow:hidden;transition:border-color .15s;
+  }
+  .poem.sel-f{border-color:var(--brand-ui)}
+  .poem.sel-w{border-color:var(--wit)}
+  .poem.sel-f.sel-w{border-color:var(--ink)}
+  .edge{width:5px;flex:none;background:transparent;transition:background .15s}
+  .poem.sel-f .edge{background:var(--brand-ui)}
+  .poem.sel-w .edge{background:var(--wit)}
+  .poem.sel-f.sel-w .edge{background:linear-gradient(var(--brand-ui) 50%,var(--wit) 50%)}
+  .poem-in{flex:1;padding:17px 18px 16px;min-width:0}
+
+  .poem-no{
+    font-size:12px;color:var(--ink-3);font-weight:700;font-variant-numeric:tabular-nums;
+    margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;
+  }
+  .mine{color:var(--ink-2);background:var(--paper);border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:600}
+
+  /* 신·약·승·인과 각 행을 한 줄씩 짝지어 배치 — 긴 줄이 넘어가도 어긋나지 않음 */
+  .lines{
+    display:grid;grid-template-columns:30px 1fr;align-items:baseline;margin-bottom:16px;
+    background:linear-gradient(var(--line),var(--line)) 30px 0/1px 100% no-repeat;
+  }
+  .lines .s{font-family:var(--sans);font-weight:800;font-size:18px;line-height:30px;color:var(--brand-ui)}
+  .lines .t{
+    font-family:var(--serif);font-size:15.5px;line-height:30px;padding-left:15px;
+    min-width:0;word-break:keep-all;overflow-wrap:anywhere;white-space:pre-wrap;
+  }
+
+  .acts{display:flex;gap:8px}
+  .vbtn{
+    flex:1;padding:10px;border-radius:999px;background:var(--card);
+    border:1.5px solid var(--line);color:var(--ink-2);font-size:13px;font-weight:600;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .vbtn.f:hover:not(:disabled){border-color:var(--brand-ui);color:var(--brand-ui)}
+  .vbtn.w:hover:not(:disabled){border-color:var(--wit);color:var(--wit)}
+  .vbtn.on::before{content:'✓ '}
+  .vbtn.f.on,.vbtn.f.on:hover{background:var(--brand-ui);border-color:var(--brand-ui);color:#fff}
+  .vbtn.w.on,.vbtn.w.on:hover{background:var(--wit);border-color:var(--wit);color:#fff}
+  .vbtn:disabled{color:var(--ink-3);background:var(--paper);border-color:var(--line-2);cursor:not-allowed}
+
+  .footbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line)}
+  .footbar-in{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;gap:14px;align-items:center;justify-content:space-between}
+  .footbar-txt{font-size:13px;color:var(--ink-2);font-weight:500}
+  .footbar .btn-main{width:auto;padding:13px 34px;flex:none}
+
+  /* ---------- 안내/완료 화면 ---------- */
+  .notice{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+  .notice-box{max-width:420px;width:100%}
+  .notice-box > .logo{margin-bottom:42px}
+  .notice-box h2{font-size:24px;margin:0 0 14px;font-weight:800;letter-spacing:-.02em;line-height:1.35}
+  .notice-box p{color:var(--ink-2);margin:0 0 8px;font-size:14px}
+  .rule{height:1px;background:var(--line);margin:26px 0}
+  .recap{background:var(--card);border:1px solid var(--line-2);border-radius:2px;padding:15px 18px;font-size:13.5px}
+  .recap div{display:flex;justify-content:space-between;gap:14px;padding:4px 0}
+  .recap div span:first-child{color:var(--ink-3)}
+  .recap div span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+
+  /* ---------- 모달 ---------- */
+  .veil{position:fixed;inset:0;background:rgba(28,32,48,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal{background:var(--card);border-radius:3px;max-width:400px;width:100%;padding:26px 24px 22px}
+  .modal h3{margin:0 0 12px;font-size:17px;font-weight:800;letter-spacing:-.01em}
+  .modal p{margin:0 0 7px;color:var(--ink-2);font-size:13.5px}
+  .modal-acts{display:flex;gap:8px;margin-top:22px}
+  .modal-acts button{flex:1;padding:13px 10px;font-weight:700}
+  .btn-ghost{background:#ECEDF1;border:none;color:var(--ink-2);clip-path:var(--cut);transition:background .15s}
+  .btn-ghost:hover{background:#E1E3E8}
+  .btn-main.danger{background:var(--ink)}
+  .btn-main.danger:hover{background:#000}
+  .modal textarea{min-height:170px;margin-top:10px}
+  .modal-lg{max-width:560px}
+  .pickbody{max-height:50vh;overflow-y:auto;margin-top:14px;padding-top:14px;border-top:1px solid var(--line-2)}
+  .pickgrp+.pickgrp{margin-top:18px}
+  .pickhd{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:9px}
+  .pickhd i{width:10px;height:10px;flex:none;clip-path:polygon(0 0,70% 0,100% 30%,100% 100%,30% 100%,0 70%)}
+  .pickhd.f{color:var(--brand-ui)} .pickhd.f i{background:var(--brand-ui)}
+  .pickhd.w{color:var(--wit)} .pickhd.w i{background:var(--wit)}
+  .pickitem{border:1px solid var(--line-2);border-radius:3px;padding:11px 13px;margin-bottom:7px}
+  .picktop{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11.5px;color:var(--ink-3);font-weight:700;margin-bottom:6px}
+  .pickitem .lines{margin-bottom:0}
+  .pickitem .lines .s{font-size:15px;line-height:26px}
+  .pickitem .lines .t{font-size:14px;line-height:26px}
+  .pickempty{color:var(--ink-3);font-size:13px;padding:6px 0}
+
+  .toast{
+    position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:60;
+    background:var(--ink);color:#fff;padding:11px 18px;border-radius:2px;font-size:13px;font-weight:500;
+    opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;
+  }
+  .toast.on{opacity:1}
+
+  .demo-flag{background:#FBF0DC;border-bottom:1px solid #E8D3A8;color:#7A5A16;font-size:12.5px;padding:8px 20px;text-align:center}
+
+  /* ---------- 관리자 ---------- */
+  .adm{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+  .adm-head{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .adm-head .logo{height:19px}
+  .adm-head .sep{width:1px;height:17px;background:var(--line)}
+  .adm h2{font-size:18px;margin:0;font-weight:800;letter-spacing:-.01em}
+  .adm-sub{color:var(--ink-3);font-size:13px;margin:0 0 22px}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto}
+  .tab{
+    padding:10px 15px;background:none;border:none;border-bottom:2px solid transparent;
+    color:var(--ink-3);font-size:13.5px;font-weight:600;white-space:nowrap;margin-bottom:-1px;
+  }
+  .tab.on{color:var(--ink);border-bottom-color:var(--brand-ui);font-weight:700}
+
+  .panel{background:var(--card);border:1px solid var(--line-2);border-radius:3px;padding:20px;margin-bottom:14px}
+  .panel h3{margin:0 0 6px;font-size:14.5px;font-weight:800}
+  .panel .lead{margin:0 0 15px;color:var(--ink-2);font-size:13px}
+  textarea{
+    width:100%;min-height:150px;padding:12px;border:1px solid var(--line);
+    border-radius:2px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:12.5px;line-height:1.65;resize:vertical;
+  }
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+  .btn-sm{padding:9px 16px;border-radius:2px;background:var(--brand-ui);color:#fff;border:none;font-size:13px;font-weight:700;transition:background .15s}
+  .btn-sm:hover{background:var(--brand-deep)}
+  .btn-sm.ghost{background:var(--card);border:1px solid var(--line);color:var(--ink-2);font-weight:500}
+  .btn-sm.ghost:hover{background:var(--paper)}
+  .btn-sm.danger{background:var(--card);border:1px solid #EBC0BD;color:var(--brand-ui);font-weight:600}
+  .btn-sm.danger:hover{background:var(--brand-tint)}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line-2);border:1px solid var(--line-2);border-radius:3px;overflow:hidden;margin-bottom:14px}
+  .stat{background:var(--card);padding:18px}
+  .stat b{display:block;font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat span{font-size:12.5px;color:var(--ink-3)}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:10px;text-align:left;border-bottom:1px solid var(--line-2);vertical-align:top}
+  th{font-size:12px;color:var(--ink-3);font-weight:700}
+  td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;font-weight:700}
+  .bar{height:4px;background:var(--line-2);margin-top:6px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--brand-ui)}
+  .bar.w i{background:var(--wit)}
+  .rank{font-variant-numeric:tabular-nums;color:var(--ink-3);width:40px;font-weight:700}
+  .rank.top{color:var(--brand-ui);font-weight:800}
+  .tie{display:block;font-size:10.5px;font-weight:700;color:var(--ink-3);margin-top:2px;white-space:nowrap}
+  .poem-mini{font-family:var(--serif);font-size:13px;line-height:1.7;color:var(--ink-2)}
+
+  .cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .cfg label{display:block;font-size:12.5px;color:var(--ink-2);margin-bottom:6px;font-weight:700}
+  .cfg input,.cfg select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:2px;background:var(--card)}
+  .cfg select.miss{border-color:#EBC0BD;background:var(--brand-tint)}
+  .empty{color:var(--ink-3);font-size:13.5px;padding:26px 0}
+
+  .filerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:11px;font-size:13px;color:var(--ink-2)}
+  .filerow input[type=file]{font-size:12.5px;max-width:100%}
+  .stage-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:13px;border-bottom:1px solid var(--line-2)}
+  .stage-head b{font-size:14.5px;font-weight:800}
+  .prev-item{border:1px solid var(--line-2);border-radius:3px;padding:13px 15px;margin-bottom:9px}
+  .prev-item .meta{font-size:12px;color:var(--ink-3);margin-bottom:8px;font-weight:600}
+  .prev-item .lines{margin-bottom:0}
+  .warnbox{background:var(--brand-tint);border:1px solid #F2C9C6;border-radius:2px;padding:12px 14px;font-size:13px;font-weight:600;color:var(--brand-ui);margin-top:13px}
+  .modes{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;margin-bottom:15px;background:var(--paper)}
+  .mode{padding:7px 16px;border:none;background:none;border-radius:999px;font-size:13px;font-weight:500;color:var(--ink-2)}
+  .mode.on{background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 0 0 1px var(--line)}
+  .linkbtn{background:none;border:none;color:var(--ink-2);font-size:12.5px;text-decoration:underline;text-underline-offset:3px;padding:0}
+
+  .foot{padding:34px 20px 44px;text-align:center}
+  .foot button{background:none;border:none;color:var(--ink-3);font-size:12px;text-decoration:underline;text-underline-offset:3px}
+</style>
+
+<div id="demoFlag" class="demo-flag hidden">데모 모드입니다. 새로고침하면 입력한 내용이 사라집니다.</div>
+<div id="app"></div>
+<div id="toast" class="toast"></div>
+<div id="veil"></div>
+
+<script>
+/* ============================================================
+   「신약승인」 4행시 투표 — 프로토타입
+   IT팀 전달용 요건 명세 겸 데모.
+   저장소: 아티팩트 환경에서는 window.storage(공유), 그 외에는 메모리.
+   ============================================================ */
+
+const SYL = ['신','약','승','인'];
+
+/* HLB GROUP CI — 원본 PNG를 표시 크기에 맞게 줄여 파일 안에 넣었다 (647×84, 2.8KB) */
+const LOGO_SRC = 'data:image/png;base64,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';
+const logo = () => `<img class="logo" src="${LOGO_SRC}" alt="HLB GROUP">`;
+
+/* 신·약·승·인과 각 행을 한 줄씩 짝지어 그린다 */
+const poemLines = lines => `<div class="lines">${
+  SYL.map((s,i)=>`<span class="s">${s}</span><span class="t">${esc(lines[i]??'')}</span>`).join('')
+}</div>`;
+
+const DEFAULT_CFG = {
+  title:'「신약승인」 4행시 공모전',
+  subtitle:'리픽투 FDA 허가 기념',
+  closeAt:'2026-10-08T18:00',
+  formalMax:5,
+  witMax:5,
+  headcount:500,
+  open:true,
+  pin:'1234',
+  v:2
+};
+
+/* ---------- 저장소 ---------- */
+const mem = new Map();
+const HAS_STORE = typeof window!=='undefined' && window.storage && typeof window.storage.get==='function';
+const S = {
+  async get(k){
+    if(!HAS_STORE) return mem.has(k)?mem.get(k):null;
+    try{ const r = await window.storage.get(k,true); return r?JSON.parse(r.value):null; }catch(e){ return null; }
+  },
+  async set(k,v){
+    if(!HAS_STORE){ mem.set(k,v); return true; }
+    try{ await window.storage.set(k,JSON.stringify(v),true); return true; }catch(e){ return false; }
+  },
+  async del(k){
+    if(!HAS_STORE){ mem.delete(k); return; }
+    try{ await window.storage.delete(k,true); }catch(e){}
+  },
+  async keys(prefix){
+    if(!HAS_STORE) return [...mem.keys()].filter(k=>k.startsWith(prefix));
+    try{ const r = await window.storage.list(prefix,true); return r? r.keys : []; }catch(e){ return []; }
+  }
+};
+const K = { cfg:'evt:cfg', entries:'evt:entries', vote:id=>'vote:'+id };
+
+/* ---------- 상태 ---------- */
+let cfg = {...DEFAULT_CFG};
+let entries = [];
+let voter = '';
+let pick = { formal:new Set(), wit:new Set() };
+let order = [];
+let admTab = 'entries';
+
+/* ---------- 유틸 ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const normId = s => String(s||'').trim().toLowerCase();
+const mask = s => s.length<=2 ? s[0]+'*' : s.slice(0,2)+'*'.repeat(Math.max(1,s.length-2));
+
+function rng(seed){
+  let s=0; for(const c of String(seed)) s=(s*31+c.charCodeAt(0))>>>0;
+  return ()=> (s=(s*1664525+1013904223)>>>0)/4294967296;
+}
+function shuffle(arr,seed){
+  const r=rng(seed), a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+let toastT;
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2200);
+}
+function fmtWhen(v){
+  if(!v) return '';
+  const d=new Date(v); if(isNaN(d)) return v;
+  const w='일월화수목금토'[d.getDay()];
+  return `${d.getMonth()+1}월 ${d.getDate()}일(${w}) ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function isClosed(){
+  if(!cfg.open) return true;
+  const d=new Date(cfg.closeAt);
+  return !isNaN(d) && Date.now()>d.getTime();
+}
+/* 브라우저 기본 확인창(confirm)은 격리된 화면에서 막히므로 화면 안에 직접 띄운다. */
+function ask(title, msg, okLabel='확인', danger=false){
+  return new Promise(res=>{
+    $('#veil').innerHTML = `
+    <div class="veil"><div class="modal">
+      <h3>${esc(title)}</h3>
+      ${String(msg).split('\n').map(l=>`<p>${esc(l)}</p>`).join('')}
+      <div class="modal-acts">
+        <button class="btn-ghost" id="askNo">취소</button>
+        <button class="btn-main ${danger?'danger':''}" id="askYes">${esc(okLabel)}</button>
+      </div>
+    </div></div>`;
+    const done = v => { $('#veil').innerHTML=''; res(v); };
+    $('#askNo').onclick = ()=> done(false);
+    $('#askYes').onclick = ()=> done(true);
+  });
+}
+
+/* 파일 내려받기가 막힌 환경을 대비해, 복사해서 엑셀·구글시트에 붙여넣는 길을 함께 연다. */
+function exportRows(name, rows){
+  const csv = rows.map(r=>r.map(csvCell).join(',')).join('\n');
+  const tsv = rows.map(r=>r.map(c=>String(c??'').replace(/[\t\r\n]+/g,' ')).join('\t')).join('\n');
+
+  $('#veil').innerHTML = `
+  <div class="veil"><div class="modal" style="max-width:580px">
+    <h3>${esc(name)} (${rows.length-1}건)</h3>
+    <p>복사하기를 누른 뒤 엑셀이나 구글시트의 A1 칸에 붙여넣으면 열이 그대로 나뉘어 들어갑니다.</p>
+    <textarea id="expTxt" readonly>${esc(tsv)}</textarea>
+    <div class="modal-acts">
+      <button class="btn-ghost" id="expClose">닫기</button>
+      <button class="btn-ghost" id="expFile">파일로 받기</button>
+      <button class="btn-main" id="expCopy">복사하기</button>
+    </div>
+  </div></div>`;
+
+  $('#expClose').onclick = ()=> $('#veil').innerHTML='';
+
+  $('#expCopy').onclick = async ()=>{
+    const ta = $('#expTxt');
+    try{
+      await navigator.clipboard.writeText(tsv);
+      toast('복사했습니다. 시트에 붙여넣으세요.');
+    }catch(e){
+      ta.focus(); ta.select();
+      let ok = false;
+      try{ ok = document.execCommand('copy'); }catch(_){}
+      toast(ok ? '복사했습니다. 시트에 붙여넣으세요.' : '내용을 선택해 두었습니다. Ctrl+C(맥은 Cmd+C)를 눌러 주세요.');
+    }
+  };
+
+  $('#expFile').onclick = ()=>{
+    try{
+      const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = name+'.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+      toast('내려받기가 시작되지 않으면 복사하기를 이용해 주세요.');
+    }catch(e){
+      toast('이 화면에서는 파일 내려받기가 막혀 있습니다. 복사하기를 이용해 주세요.');
+    }
+  };
+}
+function csvCell(v){
+  const s=String(v??'');
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+
+/* ---------- 출품작 ----------
+   1차 심사 결과 50편. 엑셀 '최종 50(투표용)' 시트의 D~G열(신·약·승·인)만 사용.
+   ref = 엑셀 A열 순번(수상자 확인용), cat = 엑셀 B열 심사 분류. 둘 다 관리자에게만 보임.
+   작품번호가 심사 분류를 드러내지 않도록 순서는 한 번 섞어 고정했다. */
+const ENTRIES_V = 2;
+const ENTRIES = [{"no":1,"ref":36,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신난다! FDA 승인 났으니까 주가 오르겠다!","약간 사볼까? 아..","승질나네, 돈이 없잖아.","인생의 가치가 어디 주머니속 돈뿐이랴,,"]},{"no":2,"ref":11,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신념은 뿌리다, 흔들릴수록 깊어졌다","약은 그 뿌리가 견딘 겨울의 수만큼 자랐고","승인 서류 어디에도 적히지 않은 밤들이 있다","인정받은 건 약이 아니라 우리의 극복과 돌파의 DNA이다"]},{"no":3,"ref":136,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신입사원부터 임원까지 다들 제미나이 켜고 운 띄울 때","약 3초 만에 쏟아지는 흔한 AI 답변들 다 끄고,","승인의 감격을 온전히 제 손가락으로 꾹꾹 눌러 담았습니다.","인간의 순수 땀방울로 이뤄낸 FDA 승인, 진짜 축하는 사람이 직접 해야 제맛이쥬!"]},{"no":4,"ref":43,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약 하나가 세상에 닿기까지","약속을 지키듯 쌓아온 수많은 나날들","승인의 기쁨 속에서 가장 먼저 떠오른 건","인내하며 각자의 자리를 지켜온 우리라는 것."]},{"no":5,"ref":5,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 하나 세상에 내놓으려고 밤낮없이 달려온 우리 직원 분들","약속된 승인의 날이 오긴 오는구나, 마침내 터졌습니다!","승인 도장 팍 찍히는 순간, 그간의 피로가 싹 가시는 기분!","인사팀 보고 있나요? 오늘 당장 법카 한도 풀고 회식 갑시다!"]},{"no":6,"ref":161,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 하나 승인받겠다고 HLB그룹사 임직원 여러분들이","약속도 없이 머리를 쥐어짜며 야근을 견뎌왔는데","승인 소식에 모두가 환호한 그 순간!!","인센티브 승인 까지가 최종 승인인거죠?"]},{"no":7,"ref":162,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신기하게도, 신약의 끝에는 늘 사람이 있습니다.","약 하나를 세상에 내놓기까지 수없이 넘어야 했던 문턱","승인의 두 글자 중 마지막 글자를 가만히 들여다보니","人, 결국 이 모든 도전의 이유는 '사람'이었습니다. Human Life Better"]},{"no":8,"ref":336,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신나게 소리 질러도 되는 날","약간 눈물나도 괜찮은 날","승인 소식 하나에 모두가 웃은 날","인정할 건 인정해야죠. 오늘은 우리가 주인공입니다."]},{"no":9,"ref":140,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인 소식에 추석 연휴도 들썩였네","약속의 리픽투, FDA 문을 활짝 열었네!","승차 완료, 다음 정거장은 리보세라닙,","인내는 쓰고 열매는 상한가!"]},{"no":10,"ref":119,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신문 한 켠의 짧은 승인 기사가","약을 기다리던 누군가에게는","승전보보다 더 큰 소식이고","인생을 다시 시작하는 시작점이 됩니다."]},{"no":11,"ref":438,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약은 아무나 하냐는 비아냥, 번번이 멀어진 승인","약해지지 않았다면 거짓말입니다. 우리도 우리를 의심했으니까요.하지만","승인이 미뤄진 날에도, 우리는 묵묵히 그 자리를 지켰습니다","인정합니다. 아무나 하는 거 아니더군요. 그런데 해냈습니다, 우리 HLB가"]},{"no":12,"ref":201,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인까지 왔습니다.","약은 환자를 살리고, 승인은 회사를 살리고,","승승장구하는 회사는 주주를 살리고,","인제 성과급까지 승인되면 직원 모두를 살립니다."]},{"no":13,"ref":396,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신이시여","약속한대로 신이내린 약","승인받았으니","인센티브도 승인해주소서"]},{"no":14,"ref":97,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약승인이라는 기적이 터졌으니","약소하지만 제 소원 하나만 들어주시죠","승진도 좋지만 일단 당장","인당 만원씩만 주세요"]},{"no":15,"ref":379,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신(新)이라는 글자 하나를 얻기까지, 우리는 세 번의 편지를 받았습니다","약에는 잘못이 없다는 걸, 우리는 한 번도 의심하지 않았습니다","승인, 그 두 글자가 적힌 편지는 생각보다 짧았습니다","인생을 건 시간들이 그 몇 줄 안에 다 들어 있었습니다"]},{"no":16,"ref":107,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["神異施與濟拔 (신이시여제발) – 신묘한 힘을 베풀어 어려움에서 구해내다","若干不安解 (약간불안해) – 조금이나마 불안을 풀어내다","承認今日也 (승인금일야) – 승인은 오늘이다","人生逆轉也 (인생역전야) – 인생이 역전되는 때다"]},{"no":17,"ref":191,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신기하죠, 구명정 만들던 회사가","약으로 생명을 구하는 회사가 되다니","승인이라는 결실로 증명해 냈습니다","인명 구하는 DNA는 그대로라는 걸"]},{"no":18,"ref":35,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신께 기도하며 견뎌온 수많은 날들","약 한 알에 담긴 우리의 눈물과 절박함이","승리의 기적으로 결실을 맺었습니다.","이제 이 작은 빛이, 누군가의 삶을 온전히 구하기를."]},{"no":19,"ref":304,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신은 아실겁니다. 데이터 검증하며 몇 번이나 사직서를 썼는지","약만 완성되면 미련 없이 떠나리라 다짐했건만","승인 도장 쿵 찍히는 순간 뽕차올라서","인사이동 필요 없습니다. 평생 이 회사에 뼈를 묻겠습니다!"]},{"no":20,"ref":370,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약 하나를 위해 수많은 오늘을 보냈고","약속할 수 없는 내일을 믿으며 수없이 다시 시작했습니다.","승인이라는 두 글자가 뜬 순간, 우리는 비로소 알았습니다.","인고의 시간은 사라지는 것이 아니라, 누군가의 내일이 된다는 것을."]},{"no":21,"ref":86,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신난다 신나","약 승인 완료 소식에","승질나쁜 팀장님도","인자하신 과장님도 파티파티"]},{"no":22,"ref":139,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인, 리픽투가 시원하게 홈런을 쳤습니다!","약진의 다음 타자, 리보세라닙도 응원합니다.","승전보가 연타석 홈런처럼 이어지길 바라며,","인정합니다. HLB 타선, 쉽게 채널 못 돌리겠습니다!"]},{"no":23,"ref":206,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인이라는 한 줄의 뉴스","약을 기다리던 누군가 또한","승리했다고 생각합니다.","인생의 다음 계획을 세워볼 용기가 생겼거든요."]},{"no":24,"ref":376,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신중하게 말하겠습니다.","약간만 기다려주세요.","승인받은 건 약 하나가 아니라","인고(人苦) 끝에 결국 해낸 HLB의 19년입니다."]},{"no":25,"ref":78,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인 났다길래","약간 기대해 봅니다.","승진까지는 바라지도 않아요","인센티브... 혹시 나오나요 ?"]},{"no":26,"ref":216,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인 — 리픽투, 해냈고","약속의 다음 타자 — 리보세라닙, 기다리고.","승인 한 번에 이 정도인데,","인제 두 번째 오면 회사 뒤집어진다."]},{"no":27,"ref":387,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약이요?","약간 힘들지 않을까요..? 그것도 FDA에...?","승인받은 한국 약이 10개도 안되는데..","인 줄 알았지? HLB가 해냈지롱~!!"]},{"no":28,"ref":94,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약이 매출 대신 가능성만 보여주던 시절","약 하나 성공시키겠다고 들어간 수많은 시간과 비용","승인이라는 결실까지 구명정과 파이프 매출로 묵묵히 버텨온 우리가 있었으니","인제 꽃길 걸으실 때, 진흙탕에서 밀어준 사람들부터 잊지 마십시오."]},{"no":29,"ref":28,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신이 삼가 경사를 아뢰옵니다, 전하!","약이 마침내 천하에 빛을 보았사옵고,","승풍파랑(乘風破浪)끝에 끝내 큰 뜻을 이루었사오니,","인류의 더 나은 삶을, HLB가 기어코 이루어 내었사옵니다 저언하"]},{"no":30,"ref":145,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 FDA 승인 소식에","약간의 감동과 설렘!!!","승인 받은 사람들의 환호성!!!","인데 저는 왜 야근이죠???"]},{"no":31,"ref":243,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신청하고 기다리고, 기다리다 또 기다리고…","약간 오래 걸린 게 아니라, 정말 오래 걸렸네요...","승인이라는 두 글자로 그 긴 시간이 드디어 보상받은 지금","인제 기다림은 끝! HLB, 꽃길 말고 글로벌길 갑시다."]},{"no":32,"ref":270,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인 났다며?","약속 잡아, 오늘 회식이야!","승인 소식에 다들 들떴는데","인사팀: “회식비는 각자 부담입니다.”"]},{"no":33,"ref":294,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인 소식을 듣고","약간 울컥하더라고요.","승인받은 건 약인데,","인정받은 건 버텨온 시간 같아서요."]},{"no":34,"ref":403,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약을 기다린 시간보다","약속을 지켜온 시간이 더 길었습니다.","승인이라는 결과 앞에서","인고했던 모든 순간이 오늘 하나의 박수가 되었습니다."]},{"no":35,"ref":9,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신중하게 허가 자료 검토하고","약간의 일탈, 기준일탈에 가슴철렁하고","승인서 보는순간 눈물핑","인제 또 다른 신약 제출이 기다리는구나 ㅋㅋ끝나지 않네 ㅋㅋㅋ"]},{"no":36,"ref":382,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인! 이번엔 바다가 아닌 병원에 희망을 띄웁니다.","약속은 하나였습니다. 생명을 구하자.","승부는 구명정으로 시작해, 신약으로 새 항로를 열었습니다.","인생에 다시 내일을. HUMAN LIFE BETTER, HLB."]},{"no":37,"ref":61,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 승인 났다고","약속 잡지 말라네요","승인 기념 회식한답니다","인류를 구했는데 내 퇴근은 못 구함"]},{"no":38,"ref":84,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신청하신 건, 검토를 모두 마쳤습니다","약효, 안전성, 제조시설까지 확인했고요","승인합니다. – FDA 드림","인제야 이 한 줄을 보네요. 다들 정말 고생 많으셨습니다"]},{"no":39,"ref":112,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신기루가 아닌 현실이 된 대한민국 최초 FDA 승인 항암제","약 효능은 First Class","승인 소식 앞에 그저 눈물이 먼저 나네요.","인생에 이런 날도 오구나. 모두 정말 고생 많으셨습니다."]},{"no":40,"ref":15,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약 개발 끝까지 가고","약효는 데이터로 꽉 잡고","승인 소식에 주가도 승승장구","인생 한방? 우린 임상 한방!"]},{"no":41,"ref":193,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신중한건 알겠는데","약 19년을 기다렸습니다. 그래도","승인해주셨으니 지난 일은 잊겠습니다.","인제 우리 친하게 지내요, FDA"]},{"no":42,"ref":362,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신호등도 잠든 새벽 홀로 켜진 연구실","약병 하나에 담긴 수많은 땀과 눈물","승인이라는 두 글자를 기다려온 HLB가족들","인제야 말할수 있어요, 우리가 해냈다고"]},{"no":43,"ref":272,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약을 만든 건 연구실의 숫자만이 아니었습니다.","약속을 지키려는 우리모두의 시간이었습니다.","승인의 두 글자가 그 모든 시간을 증명하는 순간","인류의 내일에, HLB라는 이름을 새깁니다."]},{"no":44,"ref":68,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신념으로 시작한 HLB의 도전,","약속을 현실로 만든 이름, 리픽투.","승인서에는 신약의 이름이 남지만,","인내로 쓴 역사에는 우리 모두의 이름이 남습니다."]},{"no":45,"ref":353,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신호등처럼 주기적으로 켜지던 \"멈춤\"과 \"너희는 안 된다\"는 손짓 앞에서도,,,","약속했던 믿음 하나 붙들고 \"기어이 해낸다\"며 키워온 만분의 일의 꽃, \"리픽투\",,,","승리의 소식은 \"올 가을도 배우자와 함께~\"라는 한 환자의 손편지에 답장을 대신하며,","인간의 삶을 더 낫게(Human Life Better), 또 다른 세상을 찾아 \"HLB\"는 항해를 시작합니다."]},{"no":46,"ref":143,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신입때부터 듣던 말이 있습니다 \"우리 곧 신약 나온다!\"","약속의 그날이 현실로 다가왔습니다","승인 소식에 흘린 눈물 만큼","인생 걸고! 더 열심히 뛰겠습니다!"]},{"no":47,"ref":329,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약 하나가 세상을 모두 바꿀수는 없지만","약을 기다리던 한 사람의 세상은 바꿀 수 있습니다.","승인이라는 오늘의 결과가 그래서 더욱 값지고","인생의 내일을 기다리는 누군가에게 희망이 되길 바랍니다."]},{"no":48,"ref":59,"cat":"재치상","sosok":"","dept":"","name":"","gwid":"","lines":["신약은 HLB가 만들고","약효는 환자가 느끼고","승인은 모두가 기다리고","인내는 주주가 느꼈다."]},{"no":49,"ref":415,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신념으로 견뎌온 길고 긴 밤,","약 한 알에 우리의 별 하나를 띄웠습니다.","승인이라는 빛으로 마침내 세상에 닿아,","인제 누군가의 가장 어두운 밤에 별빛이 됩니다."]},{"no":50,"ref":361,"cat":"정식","sosok":"","dept":"","name":"","gwid":"","lines":["신약 성공 소식과 함께, 기다리던 얼굴들이 가장 먼저 떠올랐습니다","약속은 하나였기 때문입니다. 담도암의 표적을 증명해 내는 것","승인은 그 약속의 끝이 아니라, 지키기 시작하는 첫날이기에","인연이 된 모든 환자에게, 리픽투(LYRFIGTU)가 닿기를 바랍니다"]}];
+
+/* ---------- 초기화 ---------- */
+async function boot(){
+  if(!HAS_STORE) $('#demoFlag').classList.remove('hidden');
+  let saved = await S.get(K.cfg) || {};
+  if((saved.v||1) < DEFAULT_CFG.v){
+    saved = {...saved, formalMax:DEFAULT_CFG.formalMax, witMax:DEFAULT_CFG.witMax, v:DEFAULT_CFG.v};
+    await S.set(K.cfg, saved);
+  }
+  cfg = {...DEFAULT_CFG, ...saved};
+  let stored = await S.get(K.entries);
+  if(stored === null || await S.get('evt:entriesV') !== ENTRIES_V){
+    for(const k of await S.keys('vote:')) await S.del(k);   // 옛 작품번호로 쌓인 표는 의미가 없다
+    stored = ENTRIES;
+    await S.set(K.entries, stored);
+    await S.set('evt:entriesV', ENTRIES_V);
+  }
+  entries = stored;
+  if(location.hash==='#admin') renderAdminGate(); else renderGate();
+}
+
+/* ============================================================
+   1. 진입 — 그룹웨어 ID 인증
+   ============================================================ */
+function renderGate(){
+  $('#app').innerHTML = `
+  <div id="gate">
+    <div class="gate-box">
+      ${logo()}
+      <div class="mast">
+        <div class="mast-syl">${SYL.map(s=>`<span>${s}</span>`).join('')}</div>
+        <div class="mast-txt">
+          <h1>${esc(cfg.title)} 투표</h1>
+          <p>${esc(cfg.subtitle)}</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="gid">그룹웨어 ID</label>
+        <input id="gid" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="예: hongildong">
+        <div class="hint">한 아이디로 한 번만 투표할 수 있습니다. 제출 후에는 수정할 수 없습니다.</div>
+      </div>
+
+      <div class="consent">
+        <div class="consent-body">
+          <b>수집 항목</b> 그룹웨어 ID<br>
+          <b>수집 목적</b> 중복 투표 방지<br>
+          <b>보유 기간</b> 시상 완료 후 30일 이내 파기
+        </div>
+      </div>
+
+      <button id="go" class="btn-main">투표 시작하기</button>
+      <div id="gerr" class="err"></div>
+      <div class="foot"><button id="toAdmin">관리자</button></div>
+    </div>
+  </div>`;
+
+  $('#toAdmin').onclick = renderAdminGate;
+  $('#gid').onkeydown = e => { if(e.key==='Enter') $('#go').click(); };
+  $('#go').onclick = enter;
+}
+
+async function enter(){
+  const err = $('#gerr');
+  const id = normId($('#gid').value);
+  err.textContent='';
+
+  if(!id) return err.textContent='그룹웨어 ID를 입력해 주세요.';
+  if(!/^[a-z0-9._-]{3,}$/.test(id)) return err.textContent='영문·숫자로 된 그룹웨어 ID를 입력해 주세요.';
+
+  entries = await S.get(K.entries) || [];
+  if(!entries.length) return err.textContent='아직 출품작이 등록되지 않았습니다. 잠시 후 다시 시도해 주세요.';
+
+  const prev = await S.get(K.vote(id));
+  if(prev) return renderAlready(prev);
+  if(isClosed()) return renderClosed();
+
+  voter = id;
+  pick = { formal:new Set(), wit:new Set() };
+  order = entries.slice().sort((a,b)=> a.no - b.no);   // 1번부터 번호순 고정
+  renderVote();
+}
+
+function renderAlready(prev){
+  $('#app').innerHTML = `
+  <div class="notice"><div class="notice-box">
+    ${logo()}
+    <h2>이미 투표를 마치셨습니다</h2>
+    <p>한 아이디로는 한 번만 투표할 수 있습니다.</p>
+    <p>결과는 ${esc(fmtWhen(cfg.closeAt))} 마감 후 그룹웨어 공지로 안내드립니다.</p>
+    <div class="rule"></div>
+    <div class="recap">
+      <div><span>참여 일시</span><span>${esc(fmtWhen(prev.at))}</span></div>
+      <div><span>정식 투표</span><span>${prev.formal.length}편 선택</span></div>
+      <div><span>재치상 투표</span><span>${prev.wit.length}편 선택</span></div>
+    </div>
+    <div class="foot"><button onclick="location.reload()">처음으로</button></div>
+  </div></div>`;
+}
+
+function renderClosed(){
+  $('#app').innerHTML = `
+  <div class="notice"><div class="notice-box">
+    ${logo()}
+    <h2>투표가 마감되었습니다</h2>
+    <p>마감 일시 ${esc(fmtWhen(cfg.closeAt))}</p>
+    <p>수상작은 그룹웨어 공지로 발표됩니다.</p>
+    <div class="foot"><button onclick="location.reload()">처음으로</button></div>
+  </div></div>`;
+}
+
+/* ============================================================
+   2. 투표
+   ============================================================ */
+function renderVote(){
+  $('#app').innerHTML = `
+  <div class="topbar"><div class="topbar-in">
+    <div class="topbar-l">${logo()}<span class="sep"></span><span class="ttl">${esc(cfg.title)} 투표</span><em>${esc(mask(voter))}</em></div>
+    <button class="tally" id="tally" title="고른 작품 다시 보기"></button>
+  </div></div>
+
+  <div class="wrap">
+    <div class="guide">
+      <h2>두 부문에 각각 투표해 주세요</h2>
+      <div class="legend">
+        <div class="lg f"><i></i><b>정식 투표</b>완성도와 메시지가 돋보이는 작품, 최대 ${cfg.formalMax}편</div>
+        <div class="lg w"><i></i><b>재치상 투표</b>재미와 센스가 돋보이는 작품, 최대 ${cfg.witMax}편</div>
+      </div>
+      <p>출품작 ${entries.length}편 · 같은 작품을 두 부문에 모두 골라도 됩니다. 고른 작품은 위쪽 집계를 눌러 언제든 확인할 수 있습니다.</p>\n      <p>마감 ${esc(fmtWhen(cfg.closeAt))}</p>
+    </div>
+    <div class="grid" id="grid">${order.map(card).join('')}</div>
+  </div>
+
+  <div class="footbar"><div class="footbar-in">
+    <div class="footbar-txt" id="footTxt"></div>
+    <button id="submit" class="btn-main">투표 제출하기</button>
+  </div></div>`;
+
+  $('#grid').onclick = e => {
+    const b = e.target.closest('.vbtn');
+    if(b && !b.disabled) toggle(b.dataset.track, Number(b.dataset.no));
+  };
+  $('#submit').onclick = confirmSubmit;
+  document.querySelector('.topbar').onclick = ev=>{ if(ev.target.closest('.tally')) openPicks(); };
+  paintTally();
+}
+
+function card(en){
+  const mineFlag = normId(en.gwid)===voter;
+  return `
+  <div class="poem" id="p${en.no}">
+    <div class="edge"></div>
+    <div class="poem-in">
+      <div class="poem-no">
+        <span>작품 ${String(en.no).padStart(2,'0')}</span>
+        ${mineFlag?'<span class="mine">내 작품</span>':''}
+      </div>
+      ${poemLines(en.lines)}
+      <div class="acts">
+        <button class="vbtn f" data-track="formal" data-no="${en.no}" ${mineFlag?'disabled':''}>정식 투표</button>
+        <button class="vbtn w" data-track="wit" data-no="${en.no}" ${mineFlag?'disabled':''}>재치상 투표</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggle(track,no){
+  const set = pick[track];
+  const max = track==='formal' ? cfg.formalMax : cfg.witMax;
+  const label = track==='formal' ? '정식 투표' : '재치상 투표';
+
+  if(set.has(no)) set.delete(no);
+  else if(set.size>=max) return toast(`${label}는 최대 ${max}편까지 선택할 수 있습니다.`);
+  else set.add(no);
+
+  const cardEl = $('#p'+no);
+  cardEl.classList.toggle('sel-f', pick.formal.has(no));
+  cardEl.classList.toggle('sel-w', pick.wit.has(no));
+  cardEl.querySelector(`.vbtn[data-track="${track}"]`).classList.toggle('on', set.has(no));
+  paintTally();
+}
+
+function paintTally(){
+  const f=pick.formal.size, w=pick.wit.size;
+  $('#tally').innerHTML = `
+    <div class="tally-item f ${f>=cfg.formalMax?'full':''}"><span>정식</span><b>${f}/${cfg.formalMax}</b></div>
+    <div class="tally-item w ${w>=cfg.witMax?'full':''}"><span>재치</span><b>${w}/${cfg.witMax}</b></div>`;
+  $('#footTxt').textContent = (f+w)===0
+    ? '아직 선택한 작품이 없습니다.'
+    : `정식 투표 ${f}편, 재치상 투표 ${w}편 골랐습니다.`;
+}
+
+/* 356편을 훑고 나면 뭘 골랐는지 잊기 쉬우므로, 고른 작품을 모아 보고 뺄 수 있게 한다 */
+function picksMarkup(){
+  const grp = (track,label,cls) => {
+    const nos = [...pick[track]];
+    return `<div class="pickgrp">
+      <div class="pickhd ${cls}"><i></i>${label} <b>${nos.length}</b>편</div>
+      ${nos.length ? nos.map(no=>{
+        const en = entries.find(x=>x.no===no); if(!en) return '';
+        return `<div class="pickitem">
+          <div class="picktop"><span>작품 ${String(no).padStart(3,'0')}</span>
+            <button class="linkbtn" data-off="${track}:${no}">빼기</button></div>
+          ${poemLines(en.lines)}
+        </div>`;
+      }).join('') : `<div class="pickempty">아직 고른 작품이 없습니다.</div>`}
+    </div>`;
+  };
+  return grp('formal','정식 투표','f') + grp('wit','재치상 투표','w');
+}
+
+function bindPicks(boxId){
+  $('#'+boxId).onclick = ev=>{
+    const b = ev.target.closest('[data-off]'); if(!b) return;
+    const [track,no] = b.dataset.off.split(':');
+    toggle(track, Number(no));
+    $('#'+boxId).innerHTML = picksMarkup();
+    const c = $('#mCount'); if(c) c.textContent = `정식 투표 ${pick.formal.size}편, 재치상 투표 ${pick.wit.size}편을 고르셨습니다.`;
+  };
+}
+
+function openPicks(){
+  $('#veil').innerHTML = `
+  <div class="veil"><div class="modal modal-lg">
+    <h3>고른 작품</h3>
+    <div class="pickbody" id="pkBody">${picksMarkup()}</div>
+    <div class="modal-acts"><button class="btn-main" id="pkClose">계속 고르기</button></div>
+  </div></div>`;
+  $('#pkClose').onclick = ()=> $('#veil').innerHTML='';
+  bindPicks('pkBody');
+}
+
+function confirmSubmit(){
+  const f=pick.formal.size, w=pick.wit.size;
+  if(f+w===0) return toast('한 편 이상 선택해 주세요.');
+
+  const short = [];
+  if(f<cfg.formalMax) short.push(`정식 투표 ${cfg.formalMax-f}편`);
+  if(w<cfg.witMax) short.push(`재치상 투표 ${cfg.witMax-w}편`);
+
+  $('#veil').innerHTML = `
+  <div class="veil"><div class="modal modal-lg">
+    <h3>이대로 제출할까요?</h3>
+    <p id="mCount">정식 투표 ${f}편, 재치상 투표 ${w}편을 고르셨습니다.</p>
+    ${short.length?`<p>${short.join(', ')}를 더 고를 수 있습니다.</p>`:''}
+    <p>제출 후에는 수정할 수 없습니다.</p>
+    <div class="pickbody" id="mBody">${picksMarkup()}</div>
+    <div class="modal-acts">
+      <button class="btn-ghost" id="mNo">더 고를게요</button>
+      <button class="btn-main" id="mYes">제출하기</button>
+    </div>
+  </div></div>`;
+  $('#mNo').onclick = ()=> $('#veil').innerHTML='';
+  $('#mYes').onclick = submitVote;
+  bindPicks('mBody');
+}
+
+async function submitVote(){
+  $('#mYes').disabled = true;
+  $('#mYes').textContent = '제출 중…';
+
+  if(await S.get(K.vote(voter))){ $('#veil').innerHTML=''; return renderAlready(await S.get(K.vote(voter))); }
+  if(isClosed()){ $('#veil').innerHTML=''; return renderClosed(); }
+
+  const rec = { id:voter, formal:[...pick.formal], wit:[...pick.wit], at:new Date().toISOString() };
+  const ok = await S.set(K.vote(voter), rec);
+  $('#veil').innerHTML='';
+
+  if(!ok){ toast('제출에 실패했습니다. 다시 시도해 주세요.'); return; }
+  renderDone(rec);
+}
+
+function renderDone(rec){
+  $('#app').innerHTML = `
+  <div class="notice"><div class="notice-box">
+    ${logo()}
+    <h2>투표해 주셔서 고맙습니다</h2>
+    <p>소중한 한 표가 정상적으로 접수되었습니다.</p>
+    <p>수상작은 마감 후 집계하여 그룹웨어 공지로 발표합니다.</p>
+    <div class="rule"></div>
+    <div class="recap">
+      <div><span>참여 아이디</span><span>${esc(mask(rec.id))}</span></div>
+      <div><span>정식 투표</span><span>${rec.formal.length}편</span></div>
+      <div><span>재치상 투표</span><span>${rec.wit.length}편</span></div>
+      <div><span>결과 발표</span><span>10월 12일(월)</span></div>
+    </div>
+    <div class="foot"><button onclick="location.reload()">처음으로</button></div>
+  </div></div>`;
+}
+
+/* ============================================================
+   3. 관리자
+   ============================================================ */
+function renderAdminGate(){
+  $('#app').innerHTML = `
+  <div id="gate"><div class="gate-box">
+    ${logo()}
+    <div class="mast">
+      <div class="mast-syl">${SYL.map(s=>`<span>${s}</span>`).join('')}</div>
+      <div class="mast-txt"><h1>관리자</h1><p>출품작 등록과 결과 집계</p></div>
+    </div>
+    <div class="field">
+      <label for="pin">관리자 비밀번호</label>
+      <input id="pin" type="password" autocomplete="off" placeholder="비밀번호 입력">
+    </div>
+    <button id="pgo" class="btn-main">들어가기</button>
+    <div id="perr" class="err"></div>
+    <div class="foot"><button onclick="location.hash='';location.reload()">투표 화면으로</button></div>
+  </div></div>`;
+  $('#pin').onkeydown = e => { if(e.key==='Enter') $('#pgo').click(); };
+  $('#pgo').onclick = async ()=>{
+    if($('#pin').value.trim() !== String(cfg.pin)) return $('#perr').textContent='비밀번호가 맞지 않습니다.';
+    await renderAdmin();
+  };
+}
+
+async function loadVotes(){
+  const keys = await S.keys('vote:');
+  const out = [];
+  for(const k of keys){ const v = await S.get(k); if(v) out.push(v); }
+  return out.sort((a,b)=> a.at<b.at?1:-1);
+}
+
+async function renderAdmin(){
+  entries = await S.get(K.entries) || [];
+  const votes = await loadVotes();
+  const tabs = [['entries','출품작'],['status','투표 현황'],['result','결과'],['cfg','설정']];
+
+  $('#app').innerHTML = `
+  <div class="adm">
+    <div class="adm-head">${logo()}<span class="sep"></span><h2>관리자</h2></div>
+    <p class="adm-sub">${esc(cfg.title)} · 출품 ${entries.length}편 · 투표 ${votes.length}명</p>
+    ${cfg.pin==='1234' ? `<div class="warnbox" style="margin:0 0 18px">기본 비밀번호(1234)를 그대로 쓰고 있습니다. 설정 탭에서 바꿔 주세요. 직원들에게도 보이는 관리자 링크가 첫 페이지에 있습니다.</div>` : ''}
+    <div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${admTab===k?'on':''}" data-t="${k}">${l}</button>`).join('')}</div>
+    <div id="admBody"></div>
+    <div class="foot"><button onclick="location.hash='';location.reload()">투표 화면으로</button></div>
+  </div>`;
+
+  document.querySelectorAll('.tab').forEach(t=> t.onclick = ()=>{ admTab=t.dataset.t; renderAdmin(); });
+
+  if(admTab==='entries') panelEntries();
+  if(admTab==='status') panelStatus(votes);
+  if(admTab==='result') panelResult(votes);
+  if(admTab==='cfg') panelCfg();
+}
+
+/* --- 출품작 등록 --- */
+let stage = null;      // 붙여넣은 표를 등록 전에 임시로 담아두는 곳
+let loadMode = 'sheet';  // 'sheet' = 시트 전체, 'answers' = 4행시만
+
+/* 4행시 네 줄만 받아들인다. 열 형태(탭·쉼표)와 줄 형태를 모두 처리. */
+function parseAnswers(text){
+  const raw = String(text||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim();
+  if(!raw) return [];
+
+  const first = raw.split('\n')[0] || '';
+  const isTable = /\t/.test(raw) || first.split(',').length >= 4;
+
+  if(isTable){
+    const out = [];
+    parseTable(raw).forEach(r=>{
+      const cells = r.map(c=>String(c).trim());
+      let s = -1;
+      for(let i=0;i+3<cells.length;i++){
+        if(SYL.every((sy,j)=> bare(cells[i+j]).startsWith(sy))){ s = i; break; }
+      }
+      if(s>=0){ out.push(cells.slice(s,s+4)); return; }
+      const filled = cells.filter(Boolean);
+      if(filled.length>=4) out.push(filled.slice(0,4));
+    });
+    return out;
+  }
+
+  const blocks = raw.split(/\n\s*\n/)
+    .map(b=> b.split('\n').map(l=>l.trim()).filter(Boolean))
+    .filter(b=> b.length);
+  if(blocks.length>1) return blocks.filter(b=>b.length>=4).map(b=>b.slice(0,4));
+
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const out = [];
+  for(let i=0;i+3<lines.length;i+=4) out.push(lines.slice(i,i+4));
+  return out;
+}
+
+/* 첫 줄이 '신 / 약 / 승 / 인' 같은 제목행인지 조심스럽게 판단한다.
+   '신났다' 같은 짧은 실제 작품을 잘라내지 않도록 두 글자 이하만 제목으로 본다. */
+function looksLikeHeader(row){
+  if(!row) return false;
+  return row.every((c,i)=>{
+    const b = bare(c);
+    return b === SYL[i] || (b.length<=2 && b.startsWith(SYL[i])) || /^(신|약|승|인)\d?행$/.test(b);
+  });
+}
+
+function colLabel(i){
+  let s='', n=i;
+  do{ s=String.fromCharCode(65+(n%26))+s; n=Math.floor(n/26)-1; }while(n>=0);
+  return s;
+}
+
+/* 탭 구분(스프레드시트 복사)과 쉼표 구분(CSV 내려받기)을 모두 받는다. 큰따옴표 안의 줄바꿈·구분자도 처리. */
+function parseTable(text){
+  text = String(text||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(!text.trim()) return [];
+  const delim = (text.match(/\t/g)||[]).length > 0 ? '\t' : ',';
+  const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; }
+      else cell += c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===delim){ row.push(cell); cell=''; }
+      else if(c==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; }
+      else cell += c;
+    }
+  }
+  row.push(cell); rows.push(row);
+  return rows.filter(r=> r.some(c=>String(c).trim()));
+}
+
+const bare = s => String(s||'').replace(/[^0-9A-Za-z가-힣]/g,'');
+
+/* 제목행에서 신·약·승·인이 연달아 붙은 구간을 찾는다. 작품이 여러 개면 여러 구간이 나온다. */
+function findQuads(header){
+  const h = header.map(bare);
+  const out = [];
+  for(let i=0;i+3<h.length;i++){
+    if(SYL.every((s,j)=> h[i+j].startsWith(s))){ out.push(i); i += 3; }
+  }
+  return out;
+}
+
+function guessMap(header, quadStart){
+  const h = header.map(x=>String(x||''));
+  const find = re => h.findIndex(x=> re.test(x));
+  const dept = find(/부서|팀명/);
+  let sosok = find(/계열사|법인|회사/);
+  if(sosok<0){ const s = find(/소속/); if(s>=0 && s!==dept) sosok = s; }
+  const q = quadStart==null ? -1 : quadStart;
+  return {
+    sosok, dept,
+    name: find(/성명|이름/),
+    gwid: find(/그룹웨어|아이디|사번|ID/i),
+    l0:q, l1:q<0?-1:q+1, l2:q<0?-1:q+2, l3:q<0?-1:q+3
+  };
+}
+
+function whoOf(e){
+  const org = [e.sosok, e.dept].filter(Boolean).join(' ');
+  return [e.name, org && `(${org})`].filter(Boolean).join(' ');
+}
+
+/* 관리자 전용 꼬리표 — 투표 화면에는 나오지 않는다 */
+function tagOf(e){
+  return [e.ref ? `원본 순번 ${e.ref}` : '', e.cat ? `심사 ${e.cat}` : '', whoOf(e)]
+    .filter(Boolean).join(' · ');
+}
+
+function buildFromStage(){
+  const body = stage.hasHeader ? stage.rows.slice(1) : stage.rows;
+  const m = stage.map;
+  const quads = [[m.l0,m.l1,m.l2,m.l3]];
+  if(stage.extra) stage.quads.slice(1).forEach(q=> quads.push([q,q+1,q+2,q+3]));
+
+  const list = []; let skipped = 0;
+  body.forEach(r=>{
+    const g = i => i>=0 ? String(r[i]??'').trim() : '';
+    quads.forEach((q,qi)=>{
+      const lines = q.map(g);
+      if(lines.filter(Boolean).length < 4){ if(qi===0) skipped++; return; }
+      list.push({ no:0, sosok:g(m.sosok), dept:g(m.dept), name:g(m.name), gwid:normId(g(m.gwid)), lines });
+    });
+  });
+  list.forEach((e,i)=> e.no = i+1);
+  return { list, skipped };
+}
+
+function panelEntries(){
+  $('#admBody').innerHTML =
+    (stage ? stageBlock() : loadBlock()) + listBlock();
+
+  if(stage) bindStage(); else bindLoad();
+  bindCommon();
+}
+
+function loadBlock(){
+  const answers = loadMode === 'answers';
+  return `
+  <div class="panel">
+    <div class="modes">
+      <button class="mode ${answers?'':'on'}" data-m="sheet">시트 전체 붙여넣기</button>
+      <button class="mode ${answers?'on':''}" data-m="answers">4행시만 붙여넣기</button>
+    </div>
+    ${answers ? `
+      <h3>4행시 네 열만 가져오기</h3>
+      <p class="lead">출품자 정보는 전혀 등록하지 않습니다. 시트에서 <b>신·약·승·인 네 열만</b> 골라 복사해 붙여넣으세요. 열 머리글을 함께 복사해도 되고 빼도 됩니다. 작품 사이를 빈 줄로 띄운 네 줄짜리 글 뭉치도 그대로 받습니다.</p>
+      <textarea id="tsv" placeholder="신약 하나에 담긴…&#9;약속처럼 지켜온…&#9;승인이라는 두 글자…&#9;인내한 모든 순간에…"></textarea>
+    ` : `
+      <h3>구글폼 응답 시트 통째로 가져오기</h3>
+      <p class="lead">응답 시트를 <b>전체 선택해서 그대로</b> 붙여넣으세요. 타임스탬프나 동의 항목이 섞여 있어도 됩니다. 열은 제목행을 읽어 자동으로 맞추고, 다음 화면에서 출품자 정보를 뺄지 고를 수 있습니다.</p>
+      <textarea id="tsv" placeholder="스프레드시트에서 Ctrl+A → Ctrl+C 한 뒤 여기에 붙여넣기"></textarea>
+    `}
+    <div class="filerow">
+      <span>또는 CSV 파일 열기</span>
+      <input id="file" type="file" accept=".csv,.tsv,.txt">
+    </div>
+    <div class="btn-row">
+      <button class="btn-sm" id="parse">불러오기</button>
+      <button class="btn-sm ghost" id="sample">출품작 50편 다시 불러오기</button>
+      <button class="btn-sm danger" id="wipe">전체 초기화</button>
+    </div>
+  </div>`;
+}
+
+function stageBlock(){
+  const rowCount = stage.rows.length - (stage.hasHeader?1:0);
+
+  if(stage.simple){
+    return `
+    <div class="panel">
+      <div class="stage-head">
+        <b>이대로 등록할까요?</b>
+        <span style="font-size:13px;color:var(--ink-3)">${rowCount}편 · 출품자 정보 없음</span>
+      </div>
+      <p class="lead">작품번호는 붙여넣은 순서대로 1번부터 매겨집니다. 나중에 수상작을 찾으실 수 있도록, 원본 시트의 행 순서를 바꾸지 마세요.</p>
+      <div id="prev"></div>
+      <div class="btn-row">
+        <button class="btn-sm" id="commit">이대로 등록하기</button>
+        <button class="btn-sm ghost" id="cancel">취소</button>
+      </div>
+    </div>`;
+  }
+
+  const cols = stage.header.map((h,i)=>{
+    const t = String(h||'').trim().replace(/\s+/g,' ');
+    return { i, label:`${colLabel(i)}. ${t ? (t.length>30?t.slice(0,30)+'…':t) : '(제목 없음)'}` };
+  });
+  const sel = (key,label,need) => `
+    <div>
+      <label>${label}${need?'':' <span style="font-weight:400;color:var(--ink-3)">(선택)</span>'}</label>
+      <select id="m_${key}" class="${need && stage.map[key]<0 ? 'miss':''}">
+        <option value="-1">— 없음 —</option>
+        ${cols.map(c=>`<option value="${c.i}" ${stage.map[key]===c.i?'selected':''}>${esc(c.label)}</option>`).join('')}
+      </select>
+    </div>`;
+
+  const missing = ['l0','l1','l2','l3'].some(k=> stage.map[k]<0);
+  const anon = ['name','gwid','sosok','dept'].every(k=> stage.map[k]<0);
+
+  return `
+  <div class="panel">
+    <div class="stage-head">
+      <b>열 맞추기</b>
+      <span style="font-size:13px;color:var(--ink-3)">${stage.header.length}개 열 · ${rowCount}개 응답</span>
+    </div>
+    <p class="lead">아래가 맞는지만 확인해 주세요. 자동으로 찾지 못한 항목은 직접 골라 주시면 됩니다.</p>
+
+    <label class="check" style="margin-bottom:16px">
+      <input id="s_head" type="checkbox" ${stage.hasHeader?'checked':''}>
+      <span>첫 줄은 제목행입니다 (투표 목록에 넣지 않음)</span>
+    </label>
+
+    <div class="cfg">
+      ${sel('l0','신 — 1행',1)}${sel('l1','약 — 2행',1)}
+      ${sel('l2','승 — 3행',1)}${sel('l3','인 — 4행',1)}
+      ${sel('name','성명',0)}${sel('gwid','그룹웨어 ID',0)}
+      ${sel('sosok','소속 계열사',0)}${sel('dept','부서',0)}
+    </div>
+
+    <div style="margin-top:11px">
+      <button class="linkbtn" id="anon">${anon ? '출품자 정보 다시 넣기' : '출품자 정보 빼고 4행시만 등록하기'}</button>
+    </div>
+
+    ${stage.quads.length>1 ? `
+    <label class="check" style="margin-top:16px">
+      <input id="s_extra" type="checkbox" ${stage.extra?'checked':''}>
+      <span>두 번째 작품 열도 함께 등록합니다 (한 사람이 2편 낸 경우)</span>
+    </label>` : ''}
+
+    ${missing ? `<div class="warnbox">신·약·승·인 네 행을 모두 지정해야 등록할 수 있습니다.</div>` : ''}
+
+    <div style="margin-top:20px">
+      <h3 style="margin-bottom:10px">이렇게 등록됩니다</h3>
+      <div id="prev"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-sm" id="commit">이대로 등록하기</button>
+      <button class="btn-sm ghost" id="cancel">취소</button>
+    </div>
+  </div>`;
+}
+
+function listBlock(){
+  const named = entries.some(e=> tagOf(e));
+  return `
+  <div class="panel">
+    <h3>등록된 출품작 ${entries.length}편</h3>
+    ${entries.length ? `
+    ${named ? '<p class="lead">출품자 정보는 등록하지 않았습니다. 수상작은 원본 순번으로 엑셀 관리용 시트에서 확인하세요.</p>' : '<p class="lead">출품자 정보 없이 등록되어 있습니다.</p>'}
+    <table><thead><tr><th style="width:60px">번호</th><th>작품</th>${named?'<th style="width:170px">원본 대조</th>':''}</tr></thead><tbody>
+      ${entries.map(e=>`<tr>
+        <td class="num">${String(e.no).padStart(2,'0')}</td>
+        <td class="poem-mini">${e.lines.map(l=>esc(l)).join('<br>')}</td>
+        ${named?`<td style="color:var(--ink-3);font-size:12px">${esc(tagOf(e))}</td>`:''}
+      </tr>`).join('')}
+    </tbody></table>` : `<div class="empty">등록된 작품이 없습니다. 위에 응답을 붙여넣거나 출품작 다시 불러오기를 눌러 주세요.</div>`}
+  </div>`;
+}
+
+function bindLoad(){
+  $('#admBody').querySelectorAll('.mode').forEach(b=>{
+    b.onclick = ()=>{ loadMode = b.dataset.m; panelEntries(); };
+  });
+
+  $('#file').onchange = e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = ()=>{ $('#tsv').value = rd.result; toast('파일을 읽었습니다. 불러오기를 눌러 주세요.'); };
+    rd.readAsText(f,'utf-8');
+  };
+
+  $('#parse').onclick = ()=>{
+    const text = $('#tsv').value;
+    if(!text.trim()) return toast('붙여넣은 내용이 없습니다.');
+
+    if(loadMode === 'answers'){
+      const quads = parseAnswers(text);
+      if(!quads.length) return toast('4행시를 찾지 못했습니다. 네 열 또는 네 줄 단위로 붙여넣어 주세요.');
+      const head = looksLikeHeader(quads[0]);
+      stage = {
+        simple: true,
+        rows: [['신','약','승','인'], ...quads],
+        header: ['신','약','승','인'],
+        hasHeader: !head,   // 아래에서 바로 뒤집는다
+        quads: [0], extra: false,
+        map: { l0:0, l1:1, l2:2, l3:3, name:-1, gwid:-1, sosok:-1, dept:-1 }
+      };
+      stage.rows = head ? quads.slice(1) : quads;
+      stage.hasHeader = false;
+      panelEntries();
+      return;
+    }
+
+    const rows = parseTable(text);
+    if(rows.length < 2) return toast('제목행과 응답이 함께 있어야 합니다.');
+
+    const width = Math.max(...rows.map(r=>r.length));
+    rows.forEach(r=>{ while(r.length<width) r.push(''); });
+
+    const header = rows[0];
+    const quads = findQuads(header);
+    stage = {
+      simple: false,
+      rows, header,
+      hasHeader: true,
+      quads,
+      extra: quads.length>1,
+      map: guessMap(header, quads[0])
+    };
+    panelEntries();
+    if(!quads.length) toast('신·약·승·인 열을 찾지 못했습니다. 직접 골라 주세요.');
+  };
+}
+
+function bindStage(){
+  const readSelects = ()=>{
+    if(stage.simple) return;
+    ['l0','l1','l2','l3','name','gwid','sosok','dept'].forEach(k=>{
+      const el = $('#m_'+k); if(el) stage.map[k] = Number(el.value);
+    });
+    const h = $('#s_head'); if(h) stage.hasHeader = h.checked;
+    const ex = $('#s_extra'); stage.extra = ex ? ex.checked : false;
+  };
+
+  const drawPrev = ()=>{
+    const { list, skipped } = buildFromStage();
+    const box = $('#prev');
+    if(!list.length){
+      box.innerHTML = `<div class="empty">아직 등록할 작품이 없습니다. 네 행이 모두 지정되었는지 확인해 주세요.</div>`;
+      return;
+    }
+    box.innerHTML =
+      list.slice(0,3).map(e=>{
+        const who = whoOf(e);
+        return `
+        <div class="prev-item">
+          <div class="meta">작품 ${String(e.no).padStart(2,'0')}${who?' · '+esc(who):''}</div>
+          ${poemLines(e.lines)}
+        </div>`;
+      }).join('')
+      + `<p class="lead" style="margin:12px 0 0">모두 ${list.length}편이 등록됩니다.${skipped?` 네 행이 비어 있는 ${skipped}개 응답은 제외했습니다.`:''}</p>`;
+  };
+
+  $('#admBody').querySelectorAll('select, input[type=checkbox]').forEach(el=>{
+    el.onchange = ()=>{
+      readSelects();
+      $('#admBody').querySelectorAll('#m_l0,#m_l1,#m_l2,#m_l3').forEach(s=>{
+        s.classList.toggle('miss', Number(s.value)<0);
+      });
+      if(el.id==='s_head'){ panelEntries(); return; }
+      drawPrev();
+      $('#commit').disabled = ['l0','l1','l2','l3'].some(k=> stage.map[k]<0);
+    };
+  });
+
+  const anonBtn = $('#anon');
+  if(anonBtn) anonBtn.onclick = ()=>{
+    readSelects();
+    const isAnon = ['name','gwid','sosok','dept'].every(k=> stage.map[k]<0);
+    if(isAnon){
+      const g = guessMap(stage.header, stage.map.l0);
+      ['name','gwid','sosok','dept'].forEach(k=> stage.map[k] = g[k]);
+    }else{
+      ['name','gwid','sosok','dept'].forEach(k=> stage.map[k] = -1);
+    }
+    panelEntries();
+  };
+
+  $('#cancel').onclick = ()=>{ stage=null; panelEntries(); };
+
+  $('#commit').onclick = async ()=>{
+    readSelects();
+    if(['l0','l1','l2','l3'].some(k=> stage.map[k]<0)) return toast('신·약·승·인 네 행을 모두 골라 주세요.');
+    const { list, skipped } = buildFromStage();
+    if(!list.length) return toast('등록할 작품이 없습니다.');
+    if(entries.length && !(await ask('출품작 교체', `이미 등록된 ${entries.length}편을 지우고 ${list.length}편으로 바꿉니다.\n이미 받은 투표가 있다면 투표 현황 탭에서 함께 지워 주세요.`, '바꾸기'))) return;
+
+    entries = list;
+    await S.set(K.entries, entries);
+    stage = null;
+    toast(`${list.length}편 등록했습니다.${skipped?` (${skipped}개 응답 제외)`:''}`);
+    renderAdmin();
+  };
+
+  drawPrev();
+  $('#commit').disabled = ['l0','l1','l2','l3'].some(k=> stage.map[k]<0);
+}
+
+function bindCommon(){
+  const s = $('#sample'), w = $('#wipe');
+  if(s) s.onclick = async ()=>{
+    entries = ENTRIES;
+    await S.set(K.entries, entries);
+    toast(`출품작 ${ENTRIES.length}편을 불러왔습니다.`);
+    renderAdmin();
+  };
+  if(w) w.onclick = async ()=>{
+    if(!(await ask('전체 초기화', '출품작과 투표 기록을 모두 지웁니다.\n되돌릴 수 없습니다.', '모두 지우기', true))) return;
+    for(const k of await S.keys('vote:')) await S.del(k);
+    entries=[]; stage=null; await S.set(K.entries,[]);
+    toast('초기화했습니다.');
+    renderAdmin();
+  };
+}
+
+/* --- 투표 현황 --- */
+function panelStatus(votes){
+  const rate = cfg.headcount>0 ? (votes.length/cfg.headcount*100) : 0;
+  $('#admBody').innerHTML = `
+  <div class="stats">
+    <div class="stat"><b>${votes.length}</b><span>투표 참여 인원</span></div>
+    <div class="stat"><b>${rate.toFixed(1)}%</b><span>참여율 (모수 ${cfg.headcount}명)</span></div>
+    <div class="stat"><b>${entries.length}</b><span>출품작</span></div>
+    <div class="stat"><b>${isClosed()?'마감':'진행 중'}</b><span>${esc(fmtWhen(cfg.closeAt))} 마감</span></div>
+  </div>
+  <div class="panel">
+    <h3>참여 기록</h3>
+    <p class="lead">아이디는 가려서 표시합니다. 참여상 추첨과 내려받기에는 전체 아이디가 포함됩니다.</p>
+    ${votes.length ? `<table><thead><tr><th>아이디</th><th>참여 일시</th><th class="num">정식</th><th class="num">재치</th></tr></thead><tbody>
+      ${votes.map(v=>`<tr><td>${esc(mask(v.id))}</td><td>${esc(fmtWhen(v.at))}</td><td class="num">${v.formal.length}</td><td class="num">${v.wit.length}</td></tr>`).join('')}
+    </tbody></table>` : `<div class="empty">아직 투표한 사람이 없습니다.</div>`}
+    <div class="btn-row">
+      <button class="btn-sm ghost" id="dlVoters">참여자 목록 내보내기</button>
+      <button class="btn-sm danger" id="wipeVotes">투표 기록만 지우기</button>
+    </div>
+    <p class="lead" style="margin:11px 0 0">출품작은 그대로 두고 투표만 0으로 되돌립니다. 사전 테스트를 마치고 실제 투표를 열기 직전에 누르세요.</p>
+  </div>`;
+
+  $('#dlVoters').onclick = ()=>{
+    const rows = [['그룹웨어ID','참여일시','정식선택','재치선택']];
+    votes.forEach(v=> rows.push([v.id, v.at, v.formal.join(' '), v.wit.join(' ')]));
+    exportRows('참여자목록', rows);
+  };
+
+  $('#wipeVotes').onclick = async ()=>{
+    const keys = await S.keys('vote:');
+    if(!keys.length) return toast('지울 투표 기록이 없습니다.');
+    if(!(await ask('투표 기록 지우기', `투표 기록 ${keys.length}건을 지웁니다.\n출품작 ${entries.length}편은 그대로 남습니다.`, '투표 기록 지우기', true))) return;
+    for(const k of keys) await S.del(k);
+    toast(`투표 기록 ${keys.length}건을 지웠습니다.`);
+    renderAdmin();
+  };
+}
+
+/* --- 결과 --- */
+function panelResult(votes){
+  const tally = {};
+  entries.forEach(e=> tally[e.no] = {f:0,w:0});
+  votes.forEach(v=>{
+    v.formal.forEach(n=> tally[n] && tally[n].f++);
+    v.wit.forEach(n=> tally[n] && tally[n].w++);
+  });
+
+  const rankBy = key => {
+    const arr = entries
+      .map(e=>({...e, n:tally[e.no][key]}))
+      .sort((a,b)=> b.n-a.n || a.no-b.no);
+    arr.forEach((e,i)=>{ e.rank = (i>0 && arr[i-1].n===e.n) ? arr[i-1].rank : i+1; });
+    arr.forEach(e=>{ e.tie = arr.filter(x=>x.n===e.n).length > 1; });
+    return arr;
+  };
+
+  const fRank = rankBy('f'), wRank = rankBy('w');
+  const fTop = fRank[0]?.n || 1, wTop = wRank[0]?.n || 1;
+
+  const table = (list,top,cls,cut) => list.length ? `
+    <table><thead><tr><th class="rank">순위</th><th>작품</th><th class="num">득표</th></tr></thead><tbody>
+      ${list.map((e,i)=>`<tr>
+        <td class="rank ${e.rank<=cut?'top':''}">${e.rank}${e.tie?'<span class="tie">공동</span>':''}</td>
+        <td>
+          <div style="font-size:12px;color:var(--ink-3)">작품 ${String(e.no).padStart(2,'0')}${tagOf(e)?' · '+esc(tagOf(e)):''}</div>
+          <div class="poem-mini">${e.lines.map(l=>esc(l)).join('<br>')}</div>
+          <div class="bar ${cls}"><i style="width:${top?Math.round(e.n/top*100):0}%"></i></div>
+        </td>
+        <td class="num">${e.n}</td>
+      </tr>`).join('')}
+    </tbody></table>` : `<div class="empty">집계할 투표가 없습니다.</div>`;
+
+  $('#admBody').innerHTML = `
+  <div class="panel">
+    <h3>정식 투표 부문</h3>
+    <p class="lead">8위까지 표시하며, 동점이면 같은 순위로 함께 보여줍니다. 대상 1편, 최우수 2편, 우수 5편을 여기서 선정합니다.</p>
+    ${table(fRank.filter(e=>e.rank<=8), fTop, '', 8)}
+  </div>
+  <div class="panel">
+    <h3>재치상 부문</h3>
+    <p class="lead">6위까지 표시하며, 동점이면 같은 순위로 함께 보여줍니다. 정식 부문 수상작은 중복 수상에서 제외하는 것을 권합니다.</p>
+    ${table(wRank.filter(e=>e.rank<=6), wTop, 'w', 3)}
+  </div>
+  <div class="panel">
+    <h3>참여상 추첨</h3>
+    <p class="lead">투표에 참여한 ${votes.length}명 중에서 무작위로 뽑습니다.</p>
+    <div class="btn-row">
+      <button class="btn-sm" id="draw">20명 추첨하기</button>
+      <button class="btn-sm ghost" id="dlResult">전체 집계 내보내기</button>
+    </div>
+    <div id="drawOut" style="margin-top:14px"></div>
+  </div>`;
+
+  $('#draw').onclick = ()=>{
+    if(!votes.length) return toast('참여자가 없습니다.');
+    const picked = shuffle(votes.map(v=>v.id), String(Date.now())).slice(0,20);
+    $('#drawOut').innerHTML = `<div class="recap"><div><span>당첨 ${picked.length}명</span><span></span></div></div>
+      <div style="margin-top:10px;font-size:13.5px;line-height:2">${picked.map(esc).join(' · ')}</div>`;
+  };
+
+  $('#dlResult').onclick = ()=>{
+    const rows = [['작품번호','원본순번','심사분류','성명','그룹웨어ID','정식득표','재치득표','신','약','승','인']];
+    entries.forEach(e=> rows.push([e.no,e.ref??'',e.cat??'',e.name,e.gwid,tally[e.no].f,tally[e.no].w,...e.lines]));
+    exportRows('투표집계', rows);
+  };
+}
+
+/* --- 설정 --- */
+function panelCfg(){
+  $('#admBody').innerHTML = `
+  <div class="panel">
+    <h3>이벤트 설정</h3>
+    <p class="lead">투표가 시작된 뒤에 최대 선택 편수를 바꾸면 이미 제출된 표와 어긋납니다. 오픈 전에 확정해 주세요.</p>
+    <div class="cfg">
+      <div><label>이벤트명</label><input id="c_title" value="${esc(cfg.title)}"></div>
+      <div><label>부제</label><input id="c_sub" value="${esc(cfg.subtitle)}"></div>
+      <div><label>마감 일시</label><input id="c_close" type="datetime-local" value="${esc(cfg.closeAt)}"></div>
+      <div><label>참여 모수 (전체 임직원 수)</label><input id="c_head" type="number" min="1" value="${cfg.headcount}"></div>
+      <div><label>정식 투표 최대 선택</label><input id="c_fmax" type="number" min="1" max="10" value="${cfg.formalMax}"></div>
+      <div><label>재치상 투표 최대 선택</label><input id="c_wmax" type="number" min="1" max="10" value="${cfg.witMax}"></div>
+      <div><label>관리자 비밀번호${cfg.pin==='1234'?' <span style="color:var(--brand-ui)">바꿔 주세요</span>':''}</label><input id="c_pin" value="${esc(cfg.pin)}"></div>
+    </div>
+    <label class="check" style="margin-top:16px">
+      <input id="c_open" type="checkbox" ${cfg.open?'checked':''}>
+      <span>투표 열기 (끄면 모든 참여자에게 마감 화면이 보입니다)</span>
+    </label>
+    <div class="btn-row"><button class="btn-sm" id="save">저장하기</button></div>
+  </div>`;
+
+  $('#save').onclick = async ()=>{
+    cfg = {...cfg,
+      title:$('#c_title').value.trim() || DEFAULT_CFG.title,
+      subtitle:$('#c_sub').value.trim(),
+      closeAt:$('#c_close').value,
+      headcount:Math.max(1,Number($('#c_head').value)||1),
+      formalMax:Math.max(1,Number($('#c_fmax').value)||3),
+      witMax:Math.max(1,Number($('#c_wmax').value)||2),
+      pin:$('#c_pin').value.trim() || '1234',
+      open:$('#c_open').checked
+    };
+    await S.set(K.cfg,cfg);
+    toast('저장했습니다.');
+    renderAdmin();
+  };
+}
+
+boot();
+</script>
